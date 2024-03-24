@@ -57,16 +57,19 @@ int main()
     clock_t start,end;
     start = clock();
     struct Matrix A,B,C;
-    A = read_matrix(A);
-    B = read_matrix(B);
+    //A = read_matrix(A);
+    //B = read_matrix(B);
     printf("input is:\n");
-    //A = read_matrix_from_file(A,"./data/a_5.txt");
+    A = read_matrix_from_file(A,"./data/a_100.txt");
     print_matrix(A);
-    //B = read_matrix_from_file(B,"./data/b_5.txt");
+    B = read_matrix_from_file(B,"./data/b_100.txt");
     print_matrix(B);
-    C = naive_multiply(A, B);
-    printf("The result is:\n");
-    print_matrix(C);
-    //end = clock();
-    //printf("running time is %ld ms",(end-start)/CLOCKS_PER_SEC);
+    for(int i =0;i<500;i++)
+    {
+        C = naive_multiply(A, B);
+        printf("The result is:\n");
+        print_matrix(C);
+    }
+    end = clock();
+    printf("running time is %ld ms",(end-start)/CLOCKS_PER_SEC);
 }
