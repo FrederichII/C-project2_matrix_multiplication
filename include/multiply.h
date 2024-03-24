@@ -1,0 +1,1 @@
+struct Matrix naive_multiply(struct Matrix A, struct Matrix B);
