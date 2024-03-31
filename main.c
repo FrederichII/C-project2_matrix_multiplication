@@ -2,6 +2,7 @@
 #include"./include/matrix.h"
 #include"./include/multiply.h"
 #include<time.h>
+#include<math.h>
 
 void print_matrix(struct Matrix mat)
 {
@@ -44,6 +45,8 @@ struct Matrix read_matrix_from_file(struct Matrix  mat, const char* dir)
         for(int j=0;j<mat.col;j++)
         {          
             fscanf(file,"%f",&mat.data[i*mat.row+j]);
+            // mat.data[i*mat.row+j] = (int)(mat.data[i*mat.row+j]*1000);
+            // mat.data[i*mat.row+j] = mat.data[i*mat.row+j]/1000;
         }
     }
     
@@ -59,17 +62,18 @@ int main()
     struct Matrix A,B,C;
     //A = read_matrix(A);
     //B = read_matrix(B);
-    printf("input is:\n");
-    A = read_matrix_from_file(A,"./data/a_100.txt");
-    print_matrix(A);
-    B = read_matrix_from_file(B,"./data/b_100.txt");
-    print_matrix(B);
-    for(int i =0;i<500;i++)
+    //printf("input is:\n");
+    A = read_matrix_from_file(A,"./data/a_200.txt");
+    //print_matrix(A);
+    B = read_matrix_from_file(B,"./data/b_200.txt");
+    //print_matrix(B);
+    for(int i =0;i<5000;i++)
     {
         C = naive_multiply(A, B);
-        printf("The result is:\n");
-        print_matrix(C);
+        //printf("The result is:\n");      
+        
     }
+    print_matrix(C);
     end = clock();
-    printf("running time is %ld ms",(end-start)/CLOCKS_PER_SEC);
+    //printf("running time is %ld s\n",(end-start)/CLOCKS_PER_SEC);
 }

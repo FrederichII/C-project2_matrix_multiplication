@@ -26,6 +26,11 @@ struct Matrix naive_multiply(struct Matrix A, struct Matrix B)
     struct Matrix C;
     C.row = rowA;
     C.col = colA;
+    
+    for(int i=0;i<sizeof(C.data)/sizeof(float);i++)
+    {
+        C.data[i] = 0;
+    }
 
     for(int i=0;i<m;i++)
         for(int j=0;j<m;j++)
