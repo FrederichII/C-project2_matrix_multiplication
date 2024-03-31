@@ -1,0 +1,360 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{geometry}
+\usepackage[mathscr]{eucal}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{color}
+\definecolor{green}{rgb}{0,0.6,0}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\lstset
+{
+	numbers=left,
+	keywordstyle=\color{blue},
+	stringstyle=\color{mauve},
+	language = c,
+	frame = shadowbox,
+	basicstyle=\footnotesize
+}
+\geometry{a4paper,scale=0.7}
+\title{\textbf{C/C++ Programming\\ Project 2: Simple Matrix Multiplication}}
+\author{\textbf{Liyuan Zhang}, Department of EEE\\\textbf{Student ID:} 12012724}
+\date{March 31,2024}
+\begin{document}
+	\maketitle
+	\newpage
+	\section{BACKGROUND}
+	Matrix multiplication is one of the most fundamental arithmetic operations, which can be conducted and boosted by computer. Matrices are essentially correspondent to linear maps, and the definition of matrix multiplication is based on the very nature of matrix multiplication which is the composition of linear maps. Suppose there is a $m\times n $ matrix $A$ and a $n\times p$ matrix $B$, the multiplication of $A$ and $B$ denoted by $C$ is:
+	$$C_{ij} = \sum_{k=1}^{n}A_{ik}B_{kj}$$
+	Suppose the time complexity of calculating each element of the multiplication is $T_{element}$ and the time complexity of calculating the whole multiplied matrix is $T_{whole}$:
+	$$T_{element} = O(n)$$
+	$$T_{whole} = \sum_{i=1}^{m}\sum_{j=1}^{p}T_{element} = mp\cdot T_{element}\approx O(n^3)$$
+	The analysis of time complexity indicates that as the size of multiplier matrix doubles, the consumed time should be increased by 8 times. The operations involved in a matrix multiplication are addition and multiplication of floating-point numbers, while technically, the consumed time of CPU to perform additions and multiplications are different. So some blocked-matrix-based computational optimization algorithms such as the \textit{Strassen} and \textit{Winograd} algorithms boost the computation by replacing some multiplications into additions, and reduce the time complexity from $O(n^3)$ to $O(n^{2.8})$ and $O(n^{2.3})$ respectively. In this project, we do not adopt the optimized algorithms because we mainly focus on the measurement and comparison of performance of the multiplication programs implemented by C and JAVA.
+	\section{TASKS}
+	\begin{itemize}
+		\item Implement a program for matrix multiplication in C and JAVA where the multiplication can be wrapped as a function. The datatype of all computations are set to be \textbf{float}.
+		\item Measure the time of computation. Observe the increasing pattern of time with respect to the size of matrices.
+		\item Compare the performance of the two programs in C and JAVA and explain the reasons for any observed differences.
+		\item Perform additional comparisons and analysis to identify any interesting insights.
+	\end{itemize}
+	\section{CODES}
+	\subsection{C}
+	The file structure is as followed:\\\\
+	includes\par
+	- matrix.h\par
+	-- multiply.h\\
+	data\par
+	-- data files in .txt format\\
+	main.c\\
+	matrix\underline{\:}multiply.c\\\\
+	
+	In matrix.h, we defined a \textit{struct} named \textit{Matrix} having member variable \textit{row}, \textit{col} and \textit{data}:
+	\begin{lstlisting}[title=Matrix.h]
+struct Matrix
+{
+	int row;
+	int col;
+	float * data ;
+};
+	\end{lstlisting}\par
+	The \textit{row} and \textit{col} specify the number of rows and columns of a matrix, and the float pointer \textit{data} specifies the address of the head of a float array where the values are stored.\\\par
+	In multiply.h, the function of matrix multiplication is declared:
+	\begin{lstlisting}[title = multiply.h]
+struct Matrix naive_multiply(struct Matrix A, struct Matrix B);
+	\end{lstlisting}\par
+	The function naive\underline{\:}multiply have two parameters: Matrix A and B, and returns a Matrix.\\\par
+	In matrix\underline{\:}mul\underline{\:}naive.c, we further implemented the function naive\underline{\:}multiply:
+	\begin{lstlisting}[title=matrix\underline{\:}mul\underline{\:}naive.c]
+#include<stdio.h>
+#include<math.h>
+#include"./include/matrix.h"
+#include"./include/multiply.h"
+#include<stdlib.h>
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE 1
+
+struct Matrix naive_multiply(struct Matrix A, struct Matrix B)
+{
+	int rowA = A.row;
+	int colA = A.col;
+	int rowB = B.row;
+	int colB = B.col;
+	if(!(rowA==colA&&rowB==colB))
+	{
+		printf("Matrix not square\n");
+		exit(EXIT_FAILURE);
+	}
+	if(!(rowA==rowB&&colA==colB))
+	{
+		printf("Dimensions not equal\n");
+		exit(EXIT_FAILURE);
+	}
+	int m = rowA;
+	struct Matrix C;
+	C.row = rowA;
+	C.col = colA;
+	
+	for(int i=0;i<sizeof(C.data)/sizeof(float);i++)
+	{
+		C.data[i] = 0;
+	}
+	
+	for(int i=0;i<m;i++)
+	for(int j=0;j<m;j++)
+	for(int k=0;k<m;k++)
+	{
+		C.data[i*m + j] += A.data[i*m + k] * B.data[k*m + j];
+	}
+	
+	return C;
+}
+
+
+	\end{lstlisting} 
+	\par
+	Line 1-3 are to include standard libraries in C and line 4-5 are to include the .h files. Line 5-6 are to make a macro definition of two status of exit() used when input matrices are invalid. When the function gets the two input matrices A and B, it first make an decision whether the number of columns in A equals to the number of rows in B. If so, the two input matrices can be multiplied and the program continues. If not, the two input matrices cannot be multiplied and the program will be terminated by exit(EXIT\underline{\:}FAILURE) and print error message. Line 25-30 are to declare and initialize a Matrix C as the container. 
+	Line 30-33 set all elements in the storage memory space to be 0 (If not do so, the program will accumulate the value each time the function is invoked.). Line 35-43 is the i-j-k for-loop to implement matrix multiplication, which is the essential part of the program.\\\par
+	In main.c, we defined several functions correlated to the I/O of matrices: 
+	\begin{itemize}
+		\item read\underline{\:}matrix: allow the user to insert matrices from the console.
+		\item read\underline{\:}matrix\underline{\:}from\underline{\:}file: the program will read values from a .txt file and assign to a Matrix struct.
+		\item print\underline{\:}matrix: print the values of a matrix to the console.
+	\end{itemize}\par
+	Then, the main function invokes the I/O functions and the function of matrix multiplication, to do the test.
+	\begin{lstlisting}[title=main.c]
+#include<stdio.h>
+#include<math.h>
+#include"./include/matrix.h"
+#include"./include/multiply.h"
+
+void print_matrix(struct Matrix mat)
+{
+	for(int i=0;i<mat.row;i++)
+	{
+		for(int j=0;j<mat.col;j++)
+		{
+			printf("%.2f ",mat.data[i*mat.row + j]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
+
+struct Matrix read_matrix(struct Matrix mat)
+{
+	printf("the size of the matrix is:\n");
+	scanf("%d %d",&mat.row,&mat.col);
+	printf("please insert the elements of the matrix:\n");
+	printf("%d %d \n",mat.row,mat.col);
+	
+	for(int i=0;i<mat.row;i++)
+	for(int j=0;j<mat.col;j++)
+	{
+		scanf("%f",&mat.data[i*mat.row + j]);
+	}
+	return mat;
+	
+}
+
+struct Matrix read_matrix_from_file(struct Matrix  mat, const char* dir)
+{
+	FILE * file = NULL;
+	file = fopen(dir, "r");
+	fscanf(file,"%d",&mat.row);
+	fscanf(file,"%d",&mat.col);
+	
+	for(int i=0;i<mat.row;i++)
+	{
+	for(int j=0;j<mat.col;j++)
+	{          
+	fscanf(file,"%f",&mat.data[i*mat.row+j]);
+	}
+	}	
+	fclose(file);
+	return mat;
+}
+int main()
+{   
+	struct Matrix A,B,C;
+	A = read_matrix_from_file(A,"./data/a_100.txt");
+	print_matrix(A);
+	B = read_matrix_from_file(B,"./data/b_100.txt");
+	print_matrix(B);
+	for(int i =0;i<10;i++)
+	{
+		C = naive_multiply(A, B);
+		printf("The result is:\n");
+	}
+	print_matrix(C);
+}
+
+	\end{lstlisting}\par
+	In function read\underline{\:}matrix\underline{\:}from\underline{\:}file, we used FILE * to represent a object of file, and used fopen, fscan, fclose to read data from file. In the main function, we designate the directory of the data file, read the data and assign it to matrix A and B. Then we made multiple times of matrix multiplication. In the end, we print the result of the multiplication to verify its correctness.\\\par
+	The above is the complete demonstration of the C codes. The JAVA codes will be demonstrated in the next section.
+	\subsection{JAVA}
+	The file structure is:\\\\
+		data\par
+	-- data files in .txt format\\
+	Main.java\\
+	MatrixIO.java\\
+	MatrixMultiplyNaive.java\\\par
+	\lstset{language=java}
+	In MatrixMultiply.java, we first declared and defined a class named Matrix consisting of three members: row, col and data. And we defined the function for matrix multiplication. (To better showcase the codes in \LaTeX, the codes are modified and do not strictly obey the standard code style.)
+	\begin{lstlisting}[title=MatrixMultiply.java]
+public class MatrixMultiplyNaive {
+Matrix multiplyNaive(Matrix A, Matrix B)
+{
+Matrix C = new Matrix();
+if(A.col != B.row)
+{
+System.out.println("Invalid size of input matrices.");
+return C;
+}
+C.row = A.row;
+C.col = B.col;
+C.data = new float[C.row*C.col];
+for(int i=0;i<A.row;i++)
+{
+for(int j=0;j<B.col;j++)
+{
+for(int k=0;k<A.col;k++)
+{
+C.data[i*A.row + j] += A.data[i*A.row + k] * B.data[k*B.row + j];
+}
+}
+}
+return C;
+}	
+}
+class Matrix
+{
+	int row;
+	int col;
+	float [] data;
+}
+	\end{lstlisting}\par
+	In MatrixIO.java, same as in C-version program, we defined some functions to input and output matrices.
+	\begin{lstlisting}[title=MatrixIO.java]
+import java.util.Scanner;
+public  class MatrixIO {
+public void printMatrix(Matrix mat)
+{
+for(int i=0;i<mat.row;i++)
+{
+for(int j=0;j<mat.col;j++)
+{
+System.out.print(mat.data[i*mat.row + j]+" ");
+}
+System.out.println();
+}
+System.out.println();
+}	
+public Matrix readMatrix(Scanner scn)
+{
+System.out.println("size of the matrix is: ");
+int m = scn.nextInt();
+int n = scn.nextInt();
+Matrix mat = new Matrix();
+mat.row = m;
+mat.col = n;
+mat.data = new float[m*n];
+if(m<=0||n<=0)
+{
+System.out.println("size must be greater than zero.");
+return mat;
+}
+for(int i=0;i<m;i++)
+{
+for(int j=0;j<m;j++)
+{
+mat.data[i*mat.row + j] = scn.nextFloat();
+}}
+return mat;
+}}
+	\end{lstlisting}\par
+	In Main.java, we invoked all the functions we declared and test the program.
+	\begin{lstlisting}[title=Main.java]
+import java.util.Scanner;
+import java.io.File;
+public class Main {
+public static void main(String args[]) {
+File file_a = new File("./data/a_100_float.txt");
+File file_b = new File("./data/b_100_float.txt");	
+try
+{
+long startTime=System.currentTimeMillis();
+Scanner scn_a = new Scanner(file_a);
+Scanner scn_b = new Scanner(file_b);
+MatrixIO io = new MatrixIO();
+MatrixMultiplyNaive mul = new MatrixMultiplyNaive();
+Matrix A = io.readMatrix(scn_a);
+Matrix B = io.readMatrix(scn_b);
+io.printMatrix(A);
+io.printMatrix(B);        
+for(int i=0;i<10;i++)
+{Matrix C = mul.multiplyNaive(A, B);io.printMatrix(C);}
+long endTime=System.currentTimeMillis(); 
+System.out.println("running time is: "+(endTime-startTime)+"ms");
+}catch(Exception e){System.out.println("File not found error");}		
+}}
+	\end{lstlisting}
+	\section{TEST}
+	\subsection{Test Corpus}
+		\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=0.8\linewidth]{./matlab.pdf}
+		\caption{Testing data generated from MATLAB}
+	\end{figure}
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=0.8\linewidth]{./data.pdf}
+		\caption{Testing data}
+	\end{figure}
+	The test corpus or dataset is generated from MATLAB. The numbers in the matrices are randomly generated by function rand() in MATLAB. We have matrices of different sizes (10,20,50,100), and different shapes (square or non-square). All the data is stored in folder \textit{data} in form of .txt files.
+
+	\subsection{Correctness}
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=0.8\linewidth]{./matlab-result.pdf}
+		\caption{MATLAB result for size 100 matrix multiplication}
+	\end{figure}
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=0.8\linewidth]{./c-result.pdf}
+		\caption{C program result for size 100 matrix multiplication}
+	\end{figure}
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=0.8\linewidth]{./java-result.pdf}
+		\caption{Java program result for size 100 matrix multiplication}
+	\end{figure}
+	To test the correctness, we will refer to the result calculated by MATLAB. If the results computed by the program we wrote in C and JAVA are consistent with that by MATLAB, then our program can perform correctly.\par
+	We can see that the results both in C and JAVA are consistent with the MATLAB result, so we can basically affirm that our program performs correctly.\par
+	\subsection{Runtime Comparison}
+	To measure the running time in C, we simply use
+	\begin{lstlisting}[language = bash]
+time ./a.out
+	\end{lstlisting}
+	when we run the executable file. This command will measure the CPU time, the user time and the system time of the program. CPU time is the duration of the kernel of CPU processes instructions, which do not include the time of I/O. The user time is the real time measurement, including the whole process of the program. Here, we take the user time as the running time of the program.\par
+	And also to better measure the speed of the program, when we compile the .c file by gcc, we use
+	\begin{lstlisting}[language=bash]
+gcc -c main.c matrix_mul_naive.c -O3
+	\end{lstlisting}
+	to activate the automatic optimization in the compiler.\\\par
+	To measure the running time in JAVA, we use 
+	\begin{lstlisting}[language=java]
+long startTime = System.currentTimeMills();
+// process
+long endTime = System,currentTimeMills();
+System.out.println("The running time is: "+(endTime-startTime)+" ms");
+	\end{lstlisting}\par
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=0.8\linewidth]{./time comparison.pdf}
+		\caption{Time comparison between C and JAVA program}
+	\end{figure}
+	We test the C and JAVA programs by computing the 5000 times of multiplication of matrices with size of 10,20,50,100,200, respectively, to get significant results, and measure the running time of C and JAVA programs. The result is shown below:	
+	\par
+	We found that C program has a faster overall speed than JAVA program, and the running time of C program is about 2 times of JAVA program, which is within our expectation that C generally runs faster than JAVA\textbf{ due to its language features that are close to hardware layer, while the objective-oriented and some other high-level features of JAVA drag down its speed. } Also, we found that the running time for both JAVA and C increases by approximately 8 times when the input matrix size doubles (see the plot below), which roughly verifies the time complexity of this naive three-for-loop algorithm is $O(n^3)$.
+\end{document}
